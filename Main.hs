@@ -9,7 +9,7 @@ import Graphics
 import MenuConf
 
 
-strs = ["bloop", "hello, world!", "conjure me", "and more"]
+strs = ["räksmörgåßαr", "hello, world!", "conjure me", "and more"]
 
 main :: IO ()
 main =
