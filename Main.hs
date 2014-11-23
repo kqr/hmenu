@@ -9,17 +9,19 @@ import Graphics
 import MenuConf
 
 
+strs = ["bloop", "hello, world!", "conjure me", "and more"]
+
 main :: IO ()
 main =
   -- withXConf sets up the necessary basic X configuration
   -- withMenuBar sets up the X window for the menu bar
   withXConf . withMenuBar $
-    run "" (MenuConf "#000000" "#ff0077")
+    run strs (MenuConf "#000000" "#ffff77")
 
 
-run :: String -> MenuConf -> WinConf -> IO ()
+run :: [String] -> MenuConf -> WinConf -> IO ()
 run str mc wc = do
-  drawMenu mc wc
+  drawMenu mc wc str
   ev <- parseXEvent (wc^.xc.dpy) (xicGetKeySym (wc^.xic))
   case ev of
     Just Abort -> return ()

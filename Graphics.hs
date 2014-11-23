@@ -10,6 +10,7 @@ import qualified Graphics.X11.Xlib        as X
 import qualified Graphics.X11.Xlib.Extras as X
 
 import           X
+import           TextRendering
 import           MenuConf
 
 
@@ -19,8 +20,6 @@ data WinConf = WinConf
   , _xic        :: X.XIC
   , _gc         :: X.GC
   , _wwidth     :: X.Dimension
-  , _lineheight :: X.Dimension
-  , _linecount  :: X.Dimension
   }
 $(makeLenses ''WinConf)
 
@@ -28,35 +27,29 @@ $(makeLenses ''WinConf)
 withMenuBar :: (WinConf -> IO ()) -> XConf -> IO ()
 withMenuBar proc xc = do
   -- Get a window, input controller and a graphics context
-  menuwin <- createMenuBarWindow xc width (lineh * lc)
-  xinp     <- getInputController (xc^.dpy) menuwin
+  menuwin <- createMenuBarWindow xc (getScreenWidth xc) 1
+  xinp    <- getInputController (xc^.dpy) menuwin
   newGC   <- X.createGC (xc^.dpy) menuwin
 
   -- Call the program with the graphics context.
   -- We're doing it inversion of control style
   -- to ensure that the GC gets free'd by us.
-  proc (WinConf xc menuwin xinp newGC width lineh lc)
+  proc (WinConf xc menuwin xinp newGC (getScreenWidth xc))
 
   X.freeGC (xc^.dpy) newGC
-  where
-    width  = fromIntegral (X.displayWidth (xc^.dpy) (xc^.scr))
-    lineh = getFontHeight (xc^.font)
-    lc = 5
 
 
-drawMenu :: MenuConf -> WinConf -> IO ()
-drawMenu mc wc = do
+drawMenu :: MenuConf -> WinConf -> [String] -> IO ()
+drawMenu mc wc strs = do
+  X.resizeWindow (wc^.xc.dpy) (wc^.window) (wc^.wwidth) (renderinfo^.totalheight)
   X.setForeground (wc^.xc.dpy) (wc^.gc) =<< (wc^.xc.color) (mc^.bgc)
   X.fillRectangle (wc^.xc.dpy) (wc^.window) (wc^.gc)
-                  0 0 (wc^.wwidth) (wc^.linecount * wc^.lineheight)
+                  0 0 (wc^.wwidth) (renderinfo^.totalheight)
   X.setForeground (wc^.xc.dpy) (wc^.gc) =<< (wc^.xc.color) (mc^.fgc)
-  X.setBackground (wc^.xc.dpy) (wc^.gc) =<< (wc^.xc.color) "#ffffff"
-  drawString wc "Hello, world!"
+  renderStrings (wc^.xc) (wc^.window) (wc^.gc) renderinfo
+  where
+    renderinfo = renderInfo (wc^.xc.font) strs
 
-
-drawString :: WinConf -> String -> IO ()
-drawString wc str = do
-  X.utf8DrawString (wc^.xc.dpy) (wc^.window) (wc^.xc.font) (wc^.gc) 0 (fromIntegral (wc^.lineheight)) str
 
 
 createMenuBarWindow

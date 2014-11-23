@@ -2,10 +2,7 @@
 
 module X where
 
-import           Control.Applicative
 import           Control.Lens
-import           Control.Monad                 (when)
-import           Data.Maybe                    (fromMaybe)
 import qualified Graphics.X11.Xim         as X
 import qualified Graphics.X11.Xlib        as X
 import qualified Graphics.X11.Xlib.Extras as X
@@ -37,8 +34,9 @@ getColor dpy colstr = do
   return (X.color_pixel color)
 
 
-getFontHeight :: X.FontSet -> X.Dimension
-getFontHeight fs = 10   -- TODO: Obviously temporary...
+getScreenWidth :: XConf -> X.Dimension
+getScreenWidth xc =
+  fromIntegral (X.displayWidth (xc^.dpy) (xc^.scr))
 
 
 parseXEvent
