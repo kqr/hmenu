@@ -16,10 +16,10 @@ For Collaborators
 Module structure:
 
  *  `Main.hs` is the entry point of the application. This
-    is where X gets initialised, a window starts and there's
-    an event receiving loop.
+    is where X gets initialised, a window is created and
+    there's an event receiving loop.
  *  `MenuConf.hs` is a module that contains configuration
-    information for the application (and also the AppEvent
+    information for the application (and also the `AppEvent`
     datatype).
  *  `Graphics.hs` contains the higher-level API for opening
     the menu window, printing strings to it and so on.
@@ -30,7 +30,7 @@ For users
 ---------
 
 To build, make sure you have a somewhat recent GHC and
-cabal-install > 1.18. Then just
+cabal-install &gt;= 1.18 (for sandboxes). Then just
 
     git clone git@github.com:kqr/hmenu.git
     cd hmenu
