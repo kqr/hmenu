@@ -20,7 +20,7 @@ main =
 run :: String -> MenuConf -> WinConf -> IO ()
 run str mc wc = do
   drawMenu mc wc
-  ev <- parseXEvent (wc^.xc)
+  ev <- parseXEvent (wc^.xc.dpy) (xicGetKeySym (wc^.xic))
   case ev of
     Just Abort -> return ()
     _ -> run str mc wc

@@ -2,8 +2,10 @@
 
 module Graphics where
 
+import           Control.Applicative
 import           Control.Lens
 import           Data.Bits
+import qualified Graphics.X11.Xim         as X
 import qualified Graphics.X11.Xlib        as X
 import qualified Graphics.X11.Xlib.Extras as X
 
@@ -14,6 +16,7 @@ import           MenuConf
 data WinConf = WinConf
   { _xc         :: XConf
   , _window     :: X.Window
+  , _xic        :: X.XIC
   , _gc         :: X.GC
   , _wwidth     :: X.Dimension
   , _lineheight :: X.Dimension
@@ -24,14 +27,15 @@ $(makeLenses ''WinConf)
 
 withMenuBar :: (WinConf -> IO ()) -> XConf -> IO ()
 withMenuBar proc xc = do
-  -- Get a window and a graphics context
+  -- Get a window, input controller and a graphics context
   menuwin <- createMenuBarWindow xc width (lineh * lc)
-  newGC <- X.createGC (xc^.dpy) menuwin
+  xinp     <- getInputController (xc^.dpy) menuwin
+  newGC   <- X.createGC (xc^.dpy) menuwin
 
   -- Call the program with the graphics context.
   -- We're doing it inversion of control style
   -- to ensure that the GC gets free'd by us.
-  proc (WinConf xc menuwin newGC width lineh lc)
+  proc (WinConf xc menuwin xinp newGC width lineh lc)
 
   X.freeGC (xc^.dpy) newGC
   where
@@ -52,7 +56,7 @@ drawMenu mc wc = do
 
 drawString :: WinConf -> String -> IO ()
 drawString wc str = do
-  X.drawImageString (wc^.xc.dpy) (wc^.window) (wc^.gc) 0 (fromIntegral (wc^.lineheight)) str
+  X.utf8DrawString (wc^.xc.dpy) (wc^.window) (wc^.xc.font) (wc^.gc) 0 (fromIntegral (wc^.lineheight)) str
 
 
 createMenuBarWindow
@@ -63,6 +67,8 @@ createMenuBarWindow
 createMenuBarWindow xc width height = do
   -- The root window is the future parent of our window
   rootw <- X.rootWindow (xc^.dpy) (xc^.scr)
+
+  -- Grab keyboard and open input methods
   X.grabKeyboard (xc^.dpy) rootw True X.grabModeAsync X.grabModeAsync X.currentTime
 
   -- We need to set some window attributes, so we wrap
@@ -90,4 +96,14 @@ createMenuBarWindow xc width height = do
 
   return menuwin
   
+
+getInputController :: X.Display -> X.Window -> IO X.XIC
+getInputController dpy win = do
+  xim <- X.openIM dpy Nothing Nothing Nothing
+  X.createIC xim [X.XIMPreeditNothing, X.XIMStatusNothing] win
+
+
+xicGetKeySym :: X.XIC -> X.XEventPtr -> IO (Maybe X.KeySym)
+xicGetKeySym xinp evptr =
+  snd <$> X.utf8LookupString xinp evptr
 
