@@ -52,7 +52,7 @@ drawMenu mc wc = do
 
 drawString :: WinConf -> String -> IO ()
 drawString wc str = do
-  X.drawImageString (wc^.xc.dpy) (wc^.window) (wc^.gc) 0 10 str
+  X.drawImageString (wc^.xc.dpy) (wc^.window) (wc^.gc) 0 (fromIntegral (wc^.lineheight)) str
 
 
 createMenuBarWindow
@@ -78,7 +78,8 @@ createMenuBarWindow xc width height = do
     -- CWEventMask if you have set the corresponding
     -- attributes.
     X.createWindow (xc^.dpy) rootw 0 0 width height 0
-                   (X.defaultDepth (xc^.dpy) (xc^.scr)) X.inputOutput (X.defaultVisual (xc^.dpy) (xc^.scr))
+                   (X.defaultDepth (xc^.dpy) (xc^.scr)) X.inputOutput
+                   (X.defaultVisual (xc^.dpy) (xc^.scr))
                    (X.cWOverrideRedirect .|. X.cWEventMask) swa
 
   -- We want our new window on top
